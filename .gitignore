@@ -1,0 +1,5 @@
+agent_profile/
+extensions/
+agent_audit.log
+__pycache__/
+.venv/
