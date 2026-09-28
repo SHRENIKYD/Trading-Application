@@ -1,5 +1,8 @@
 agent_profile/
 extensions/
 agent_audit.log
+logs/
+data/
+STOP
 __pycache__/
 .venv/

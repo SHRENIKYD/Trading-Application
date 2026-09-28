@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sepolia test payment</title>
+  <style>
+    body { font: 16px/24px system-ui, sans-serif; max-width: 640px; margin: 32px auto; padding: 0 16px; }
+    .warn { padding: 12px; border: 2px solid #b42318; border-radius: 8px; }
+    label { display: block; margin-top: 16px; }
+    input { width: 100%; padding: 8px; font: inherit; box-sizing: border-box; }
+    button { margin-top: 16px; padding: 8px 16px; font: inherit; }
+    #status { margin-top: 24px; white-space: pre-wrap; overflow-wrap: anywhere; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Sepolia test payment</h1>
+    <p class="warn">Test network only. This page refuses to send unless MetaMask is on Sepolia (chain 11155111),
+      where coins have no value.</p>
+
+    <button type="button" id="connect">Connect wallet</button>
+    <p id="account">Not connected.</p>
+
+    <form id="pay">
+      <label>Recipient address <input name="recipient" placeholder="Recipient address" autocomplete="off"></label>
+      <label>Amount in SepoliaETH <input name="amount" placeholder="Amount in ETH" autocomplete="off"></label>
+      <button type="submit" id="pay-btn">Send payment</button>
+    </form>
+
+    <p id="status" role="status"></p>
+  </main>
+
+  <script>
+    "use strict";
+    const SEPOLIA = "0xaa36a7"; // 11155111
+    const SEPOLIA_PARAMS = {
+      chainId: SEPOLIA,
+      chainName: "Sepolia",
+      nativeCurrency: { name: "Sepolia Ether", symbol: "SepoliaETH", decimals: 18 },
+      rpcUrls: ["https://ethereum-sepolia-rpc.publicnode.com"],
+      blockExplorerUrls: ["https://sepolia.etherscan.io"],
+    };
+    const status = (text) => { document.getElementById("status").textContent = text; };
+    let account = null;
+
+    function toWeiHex(amount) {
+      if (!/^\d+(\.\d{1,18})?$/.test(amount)) throw new Error("Amount must be a number with at most 18 decimals.");
+      const [whole, frac = ""] = amount.split(".");
+      const wei = BigInt(whole) * 10n ** 18n + BigInt(frac.padEnd(18, "0"));
+      if (wei <= 0n) throw new Error("Amount must be greater than 0.");
+      return "0x" + wei.toString(16);
+    }
+
+    async function ensureSepolia() {
+      try {
+        await ethereum.request({ method: "wallet_switchEthereumChain", params: [{ chainId: SEPOLIA }] });
+      } catch (error) {
+        if (error.code !== 4902) throw error;
+        await ethereum.request({ method: "wallet_addEthereumChain", params: [SEPOLIA_PARAMS] });
+      }
+      const chain = await ethereum.request({ method: "eth_chainId" });
+      if (chain !== SEPOLIA) throw new Error(`Wallet is on chain ${chain}, not Sepolia. Nothing was sent.`);
+    }
+
+    document.getElementById("connect").addEventListener("click", async () => {
+      if (!window.ethereum) { status("No wallet found in this browser."); return; }
+      try {
+        [account] = await ethereum.request({ method: "eth_requestAccounts" });
+        await ensureSepolia();
+        document.getElementById("account").textContent = `Connected: ${account} on Sepolia.`;
+        status("Wallet connected on Sepolia.");
+      } catch (error) {
+        status(`Connect failed: ${error.message}`);
+      }
+    });
+
+    document.getElementById("pay").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const form = new FormData(event.target);
+      const to = String(form.get("recipient")).trim();
+      const amount = String(form.get("amount")).trim();
+      try {
+        if (!account) throw new Error("Connect the wallet first.");
+        if (!/^0x[0-9a-fA-F]{40}$/.test(to)) throw new Error("Recipient must be a 0x address with 40 hex characters.");
+        const value = toWeiHex(amount);
+        await ensureSepolia();
+        status("Waiting for you to confirm in MetaMask...");
+        const hash = await ethereum.request({ method: "eth_sendTransaction", params: [{ from: account, to, value }] });
+        status(`PAYMENT SENT on Sepolia.\nTransaction: ${hash}\nhttps://sepolia.etherscan.io/tx/${hash}`);
+      } catch (error) {
+        status(`PAYMENT NOT SENT: ${error.message}`);
+      }
+    });
+  </script>
+</body>
+</html>

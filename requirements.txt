@@ -2,3 +2,4 @@ ollama>=0.4.0
 playwright>=1.51.0
 beautifulsoup4>=4.12.0
 httpx>=0.27.0
+aiohttp>=3.9

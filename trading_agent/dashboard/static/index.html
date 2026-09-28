@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Local control dashboard for the browser agent.">
+  <meta name="dashboard-token" content="__TOKEN__">
+  <title>Agent control</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/dashboard.css">
+</head>
+<body>
+  <main class="page">
+    <header class="top">
+      <div class="brand">
+        <span class="tile tile-logo" aria-hidden="true"><svg class="icon"><use href="/static/icons.svg#i-robot"/></svg></span>
+        <div>
+          <h1 class="title">Agent <span class="title-accent">Control</span></h1>
+          <p class="subtle">Session <span id="session">—</span></p>
+        </div>
+      </div>
+
+      <div class="activity" aria-live="polite">
+        <span class="tile tile-sm" id="activity-tile" data-role="info" aria-hidden="true">
+          <svg class="icon"><use id="activity-icon" href="/static/icons.svg#i-hourglass"/></svg>
+        </span>
+        <div>
+          <p class="activity-now" id="activity">Connecting</p>
+          <p class="subtle" id="step">Waiting for the agent</p>
+        </div>
+      </div>
+
+      <p class="status" id="status" data-role="info" role="status">
+        <svg class="icon" aria-hidden="true"><use id="status-icon" href="/static/icons.svg#i-hourglass"/></svg>
+        <span id="status-text">Connecting</span>
+      </p>
+    </header>
+
+    <section class="wallet-wait" id="wallet-wait" data-role="warn" aria-labelledby="wallet-wait-title" hidden>
+      <span class="tile" aria-hidden="true"><svg class="icon"><use href="/static/icons.svg#i-hand-coins"/></svg></span>
+      <div class="wallet-wait-body">
+        <h2 class="result-title" id="wallet-wait-title" tabindex="-1">Waiting for you in MetaMask</h2>
+        <p class="result-line" id="wallet-wait-text"></p>
+      </div>
+      <button type="button" class="button button-quiet" id="wallet-done">I'm done in MetaMask – continue</button>
+    </section>
+
+    <section class="approval" id="approval" data-role="warn" aria-labelledby="approval-title" hidden>
+      <div class="approval-head">
+        <span class="tile" aria-hidden="true"><svg class="icon"><use href="/static/icons.svg#i-hand-coins"/></svg></span>
+        <div class="approval-heading">
+          <h2 class="approval-title" id="approval-title" tabindex="-1">Your approval is needed</h2>
+          <p class="approval-summary" id="approval-summary"></p>
+        </div>
+        <p class="approval-timer"><svg class="icon icon-inline" aria-hidden="true"><use href="/static/icons.svg#i-clock"/></svg>
+          <span>Blocks itself in <strong id="approval-countdown">—</strong></span></p>
+      </div>
+
+      <dl class="approval-facts" id="approval-money">
+        <div><dt>Cost</dt><dd id="approval-cost">—</dd></div>
+        <div><dt>Budget after</dt><dd id="approval-after">—</dd></div>
+        <div><dt>Why it was flagged</dt><dd id="approval-why">—</dd></div>
+        <div><dt>Money actions this run</dt><dd id="approval-count">—</dd></div>
+        <div class="approval-wide"><dt>Button or field</dt><dd id="approval-element">—</dd></div>
+        <div class="approval-wide"><dt>Page</dt><dd id="approval-page">—</dd></div>
+      </dl>
+
+      <div id="approval-form" hidden>
+        <h3 class="approval-subtitle">Form as it will be sent</h3>
+        <table class="form-table">
+          <thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead>
+          <tbody id="approval-form-rows"></tbody>
+        </table>
+        <p class="approval-warning" id="approval-empty" hidden>
+          <svg class="icon icon-inline" aria-hidden="true"><use href="/static/icons.svg#i-warning"/></svg>
+          Some fields are empty. Approving now may send an incomplete payment.
+        </p>
+      </div>
+
+      <p class="approval-question" id="approval-question" hidden></p>
+
+      <div class="approval-actions">
+        <button type="button" class="button button-block" id="approval-no">Block</button>
+        <button type="button" class="button button-approve" id="approval-yes">Approve</button>
+        <p class="subtle" id="approval-note">If a MetaMask window opens, check and confirm it there yourself. The agent never touches it.</p>
+      </div>
+    </section>
+
+    <section class="goal" aria-labelledby="goal-label">
+      <span class="tile" data-role="money" aria-hidden="true"><svg class="icon"><use href="/static/icons.svg#i-target"/></svg></span>
+      <div>
+        <h2 class="eyebrow" id="goal-label">Session goal</h2>
+        <p class="goal-text"><q id="goal">—</q></p>
+      </div>
+    </section>
+
+    <section aria-label="Limits and budget">
+      <ul class="facts">
+        <li class="fact" data-role="info">
+          <span class="tile" aria-hidden="true"><svg class="icon"><use href="/static/icons.svg#i-globe"/></svg></span>
+          <div><p class="fact-label">Start page</p>
+            <p class="fact-value"><a id="start-url" class="value-link" href="#" target="_blank" rel="noopener noreferrer">—</a></p></div>
+        </li>
+        <li class="fact" data-role="safe">
+          <span class="tile" aria-hidden="true"><svg class="icon"><use href="/static/icons.svg#i-shield-check"/></svg></span>
+          <div><p class="fact-label">Allowed sites</p><p class="fact-value" id="domains">—</p></div>
+        </li>
+        <li class="fact" data-role="info">
+          <span class="tile" aria-hidden="true"><svg class="icon"><use href="/static/icons.svg#i-cpu"/></svg></span>
+          <div><p class="fact-label">Model</p><p class="fact-value" id="model">—</p></div>
+        </li>
+        <li class="fact" data-role="money">
+          <span class="tile" aria-hidden="true"><svg class="icon"><use href="/static/icons.svg#i-coins"/></svg></span>
+          <div><p class="fact-label">Balance</p><p class="fact-value" id="balance">—</p>
+            <p class="fact-note">Carried over between runs</p></div>
+        </li>
+        <li class="fact" data-role="money">
+          <span class="tile" aria-hidden="true"><svg class="icon"><use href="/static/icons.svg#i-shield-warning"/></svg></span>
+          <div><p class="fact-label">Floor</p><p class="fact-value" id="floor">—</p>
+            <p class="fact-note">The agent never spends below this</p></div>
+        </li>
+        <li class="fact" data-role="safe" id="headroom-card">
+          <span class="tile" aria-hidden="true"><svg class="icon"><use href="/static/icons.svg#i-lightning"/></svg></span>
+          <div><p class="fact-label">Can still spend</p><p class="fact-value" id="headroom">—</p>
+            <p class="fact-note" id="headroom-note"></p></div>
+        </li>
+        <li class="fact" data-role="money">
+          <span class="tile" aria-hidden="true"><svg class="icon"><use href="/static/icons.svg#i-hand-coins"/></svg></span>
+          <div><p class="fact-label">Auto-approve up to</p><p class="fact-value" id="auto-approve">—</p>
+            <p class="fact-note" id="auto-approve-note"></p></div>
+        </li>
+        <li class="fact" data-role="limit">
+          <span class="tile" aria-hidden="true"><svg class="icon"><use href="/static/icons.svg#i-scales"/></svg></span>
+          <div><p class="fact-label">Largest amount</p><p class="fact-value" id="max-amount">—</p>
+            <p class="fact-note" id="max-amount-note"></p></div>
+        </li>
+        <li class="fact" data-role="info" id="approvals-card">
+          <span class="tile" aria-hidden="true"><svg class="icon"><use href="/static/icons.svg#i-list-checks"/></svg></span>
+          <div><p class="fact-label">Money actions this run</p><p class="fact-value" id="approvals">—</p>
+            <p class="fact-note">Approved by you or automatically</p></div>
+        </li>
+      </ul>
+    </section>
+
+    <section class="result" id="result" data-role="safe" aria-labelledby="result-title" hidden>
+      <span class="tile" aria-hidden="true"><svg class="icon"><use id="result-icon" href="/static/icons.svg#i-check-circle"/></svg></span>
+      <div class="result-body">
+        <h2 class="result-title" id="result-title">Run finished</h2>
+        <p class="result-line" id="result-reason"></p>
+        <p class="result-line" id="result-claim" hidden></p>
+        <p class="result-line" id="result-audit" hidden></p>
+        <p class="result-line result-warning" id="result-warning" hidden></p>
+      </div>
+      <p class="result-time">
+        <svg class="icon icon-inline" aria-hidden="true"><use href="/static/icons.svg#i-clock"/></svg>
+        <span>Ended at <br><time id="result-time"></time></span>
+      </p>
+    </section>
+
+    <footer class="actions">
+      <button type="button" class="button button-stop" id="stop" disabled>
+        <svg class="icon icon-inline" aria-hidden="true"><use href="/static/icons.svg#i-stop"/></svg>
+        Stop agent
+      </button>
+      <p class="subtle" id="stop-note">Stops before the next action. A step already running finishes first.</p>
+      <a class="button button-quiet" href="/log" target="_blank" rel="noopener">
+        View session log
+        <svg class="icon icon-inline" aria-hidden="true"><use href="/static/icons.svg#i-arrow-right"/></svg>
+      </a>
+    </footer>
+  </main>
+
+  <script src="/static/common.js"></script>
+  <script src="/static/dashboard.js"></script>
+</body>
+</html>

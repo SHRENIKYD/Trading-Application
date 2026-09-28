@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Readable, step-by-step log of the current agent session.">
+  <title>Session log</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/dashboard.css">
+</head>
+<body>
+  <main class="page">
+    <header class="top top-log">
+      <div class="brand">
+        <span class="tile tile-logo" aria-hidden="true"><svg class="icon"><use href="/static/icons.svg#i-list-checks"/></svg></span>
+        <div>
+          <h1 class="title">Session <span class="title-accent">log</span></h1>
+          <p class="subtle">Session <span id="session">—</span> · <span id="live">Connecting</span></p>
+        </div>
+      </div>
+      <nav class="log-links" aria-label="Log views">
+        <a class="button button-quiet" href="/">
+          <svg class="icon icon-inline" aria-hidden="true"><use href="/static/icons.svg#i-robot"/></svg>
+          Dashboard
+        </a>
+        <a class="button button-quiet" href="/session.jsonl" download>Raw file (JSONL)</a>
+      </nav>
+    </header>
+
+    <section class="goal" aria-labelledby="goal-label">
+      <span class="tile" data-role="money" aria-hidden="true"><svg class="icon"><use href="/static/icons.svg#i-target"/></svg></span>
+      <div>
+        <h2 class="eyebrow" id="goal-label">Session goal</h2>
+        <p class="goal-text"><q id="goal">—</q></p>
+        <p class="subtle" id="setup"></p>
+      </div>
+    </section>
+
+    <div class="log-filter" role="group" aria-label="Show">
+      <label><input type="checkbox" id="show-seen"> Show what the agent saw on each page</label>
+      <label><input type="checkbox" id="show-raw"> Show the model's raw replies</label>
+    </div>
+
+    <ol class="log" id="log" aria-live="polite"></ol>
+  </main>
+
+  <script src="/static/common.js"></script>
+  <script src="/static/log.js"></script>
+</body>
+</html>
